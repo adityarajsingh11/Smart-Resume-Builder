@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeCraft Pro - Next-Gen Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #2563eb;
+            --accent: #f59e0b;
+            --text: #1e293b;
+            --light-bg: #f8fafc;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--light-bg);
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .builder-panel {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+        }
+
+        .preview-panel {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-bottom: 2rem;
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-group {
+            margin: 2rem 0;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            background: var(--light-bg);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        textarea {
+            height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1.25rem 2.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Enhanced Resume Preview Styles */
+        .resume {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            min-height: 1122px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .resume-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .resume-header h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .resume-header p {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1.25rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .social-links a {
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--secondary);
+        }
+
+        .resume-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .resume-section h3 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .achievement-list, .project-list, .skill-list {
+            list-style: none;
+            padding-left: 1.5rem;
+        }
+
+        .achievement-list li, .project-list li, .skill-list li {
+            margin-bottom: 1rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .achievement-list li::before {
+            content: "▹";
+            color: var(--accent);
+            position: absolute;
+            left: 0;
+        }
+
+        .project-item {
+            background: var(--light-bg);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-item h4 {
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .language-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .language-item {
+            background: var(--light-bg);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="builder-panel">
+        <h2><i class="fas fa-rocket"></i> Resume Builder</h2>
+        
+        <!-- Personal Information Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-user-circle"></i> Personal Details</div>
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="fullName" placeholder="John Doe">
+            </div>
+            <div class="input-group">
+                <label>Professional Title</label>
+                <input type="text" id="professionalTitle" placeholder="Software Engineer">
+            </div>
+            <div class="input-group">
+                <label>Contact Information</label>
+                <input type="email" id="email" placeholder="Email Address">
+                <input type="tel" id="phone" placeholder="Phone Number" style="margin-top: 0.75rem;">
+                <input type="text" id="address" placeholder="Location" style="margin-top: 0.75rem;">
+            </div>
+            <div class="input-group">
+                <label>Social Links (comma separated)</label>
+                <input type="text" id="profileLinks" placeholder="LinkedIn, GitHub, Portfolio">
+            </div>
+        </div>
+
+        <!-- Professional Summary Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-file-alt"></i> Professional Summary</div>
+            <textarea id="summary" placeholder="Describe your professional background and key skills..."></textarea>
+        </div>
+
+        <!-- Education Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-graduation-cap"></i> Education</div>
+            <textarea id="education" placeholder="Institution Name&#10;Degree & Major&#10;Dates Attended"></textarea>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-tools"></i> Skills</div>
+            <textarea id="skills" placeholder="List your skills (one per line)&#10;Example:&#10;JavaScript&#10;React&#10;Project Management"></textarea>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-code-branch"></i> Projects</div>
+            <textarea id="projects" placeholder="Project Name - Description&#10;Another Project - Details"></textarea>
+        </div>
+
+        <!-- Achievements Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-trophy"></i> Achievements</div>
+            <textarea id="achievements" placeholder="List your achievements (one per line)"></textarea>
+        </div>
+
+        <!-- Languages Section -->
+        <div class="section-group">
+            <div class="section-title"><i class="fas fa-language"></i> Languages</div>
+            <input type="text" id="languages" placeholder="English (Fluent), Spanish (Intermediate)">
+        </div>
+
+        <button onclick="generatePDF()"><i class="fas fa-file-download"></i> Generate PDF Resume</button>
+    </div>
+
+    <div class="preview-panel">
+        <div class="resume" id="resumeContent">
+            <div class="resume-header">
+                <h1 id="previewName">John Doe</h1>
+                <p id="previewTitle">Software Engineer</p>
+                <div class="contact-info">
+                    <span id="previewEmail">john@example.com</span>
+                    <span id="previewPhone">(123) 456-7890</span>
+                    <span id="previewAddress">New York, USA</span>
+                </div>
+                <div class="social-links" id="previewLinks"></div>
+            </div>
+
+            <!-- Professional Summary Preview -->
+            <div class="resume-section">
+                <h3><i class="fas fa-user-tie"></i> Professional Summary</h3>
+                <div id="previewSummary" class="preview-text"></div>
+            </div>
+
+            <!-- Education Preview -->
+            <div class="resume-section">
+                <h3><i class="fas fa-university"></i> Education</h3>
+                <div id="previewEducation" class="preview-text"></div>
+            </div>
+
+            <!-- Skills Preview -->
+            <div class="resume-section">
+                <h3><i class="fas fa-tools"></i> Skills</h3>
+                <ul class="achievement-list" id="previewSkills"></ul>
+            </div>
+
+            <!-- Projects Preview -->
+            <div class="resume-section">
+                <h3><i class="fas fa-project-diagram"></i> Projects</h3>
+                <ul class="project-list" id="previewProjects"></ul>
+            </div>
+
+            <!-- Achievements Preview -->
+            <div class="resume-section">
+                <h3><i class="fas fa-medal"></i> Achievements</h3>
+                <ul class="achievement-list" id="previewAchievements"></ul>
+            </div>
+
+            <!-- Languages Preview -->
+            <div class="resume-section">
+                <h3><i class="fas fa-globe"></i> Languages</h3>
+                <div class="language-list" id="previewLanguages"></div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <script>
+        // Real-time Preview Updates and PDF Generation
+        document.querySelectorAll('input, textarea').forEach(element => {
+            element.addEventListener('input', updatePreview);
+        });
+        
+        function updatePreview() {
+            // Personal Information
+            document.getElementById('previewName').textContent = document.getElementById('fullName').value;
+            document.getElementById('previewTitle').textContent = document.getElementById('professionalTitle').value;
+            document.getElementById('previewEmail').textContent = document.getElementById('email').value;
+            document.getElementById('previewPhone').textContent = document.getElementById('phone').value;
+            document.getElementById('previewAddress').textContent = document.getElementById('address').value;
+    
+            // Social Links
+            const links = document.getElementById('profileLinks').value.split(',').map(link => link.trim());
+            document.getElementById('previewLinks').innerHTML = links.filter(link => link).map(link => 
+                `<a href="${link}" target="_blank"><i class="fas fa-external-link-alt"></i> ${link}</a>`
+            ).join(' ');
+    
+            // Professional Summary
+            document.getElementById('previewSummary').innerHTML = 
+                document.getElementById('summary').value.replace(/\n/g, '<br>');
+    
+            // Education
+            document.getElementById('previewEducation').innerHTML = 
+                document.getElementById('education').value.replace(/\n/g, '<br>');
+    
+            // Skills
+            const skills = document.getElementById('skills').value.split('\n').filter(s => s);
+            document.getElementById('previewSkills').innerHTML = 
+                skills.map(s => `<li>${s}</li>`).join('');
+    
+            // Projects
+            const projects = document.getElementById('projects').value.split('\n').filter(p => p);
+            document.getElementById('previewProjects').innerHTML = projects.map(p => {
+                const [title, ...description] = p.split('-');
+                return `
+                    <li class="project-item">
+                        <h4>${title?.trim() || 'Project Title'}</h4>
+                        <div>${description.join('-')?.trim() || 'Project description'}</div>
+                    </li>
+                `;
+            }).join('');
+    
+            // Achievements
+            const achievements = document.getElementById('achievements').value.split('\n').filter(a => a);
+            document.getElementById('previewAchievements').innerHTML = 
+                achievements.map(a => `<li>${a}</li>`).join('');
+    
+            // Languages
+            const languages = document.getElementById('languages').value.split(',').map(l => l.trim());
+            document.getElementById('previewLanguages').innerHTML = 
+                languages.filter(l => l).map(l => {
+                    const [lang, level] = l.split('(').map(part => part.trim());
+                    return `
+                        <div class="language-item">
+                            <span>${lang}</span>
+                            <span>${level?.replace(')', '') || ''}</span>
+                        </div>
+                    `;
+                }).join('');
+        }
+        
+        function generatePDF() {
+            // Validate required fields
+            const requiredFields = ['fullName', 'email', 'professionalTitle'];
+            let isValid = true;
+            
+            requiredFields.forEach(id => {
+                const field = document.getElementById(id);
+                if (!field.value.trim()) {
+                    field.style.borderColor = '#ef4444';
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                alert('Please fill in all required fields (marked in red)');
+                return;
+            }
+        
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'pt', 'a4');
+            
+            try {
+                // Set default font
+                doc.setFont('helvetica');
+                doc.setFontSize(12);
+        
+                // Get all values
+                const name = document.getElementById('fullName').value;
+                const title = document.getElementById('professionalTitle').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const address = document.getElementById('address').value;
+                const profileLinks = document.getElementById('profileLinks').value.split(',').map(link => link.trim());
+                const summary = document.getElementById('summary').value;
+                const education = document.getElementById('education').value;
+                const skills = document.getElementById('skills').value;
+                const projects = document.getElementById('projects').value;
+                const achievements = document.getElementById('achievements').value;
+                const languages = document.getElementById('languages').value;
+        
+                // Add Header
+                doc.setFontSize(22);
+                doc.setFont(undefined, 'bold');
+                doc.text(name, 40, 60);
+                
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'normal');
+                doc.text(title, 40, 80);
+        
+                // Add Contact Information
+                doc.setFontSize(12);
+                let yPosition = 100;
+                
+                // Email
+                doc.textWithLink(`Email: ${email}`, 40, yPosition, { url: `mailto:${email}` });
+                yPosition += 20;
+                
+                // Phone
+                doc.text(`Phone: ${phone}`, 40, yPosition);
+                yPosition += 20;
+                
+                // Address
+                doc.text(`Location: ${address}`, 40, yPosition);
+                yPosition += 20;
+                
+                // Social Links
+                profileLinks.forEach(link => {
+                    if(link) {
+                        doc.textWithLink(link, 40, yPosition, { url: link });
+                        yPosition += 20;
+                    }
+                });
+                yPosition += 20;
+        
+                // Add Professional Summary
+                if(summary) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Professional Summary', 40, yPosition);
+                    yPosition += 20;
+                    doc.setFont(undefined, 'normal');
+                    const summaryLines = doc.splitTextToSize(summary, 500);
+                    doc.text(summaryLines, 40, yPosition);
+                    yPosition += summaryLines.length * 15 + 30;
+                }
+        
+                // Add Education
+                if(education) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Education', 40, yPosition);
+                    yPosition += 20;
+                    doc.setFont(undefined, 'normal');
+                    education.split('\n').forEach(line => {
+                        if(line.trim()) {
+                            doc.text(`• ${line.trim()}`, 40, yPosition);
+                            yPosition += 15;
+                        }
+                    });
+                    yPosition += 20;
+                }
+        
+                // Add Skills
+                if(skills) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Skills', 40, yPosition);
+                    yPosition += 20;
+                    doc.setFont(undefined, 'normal');
+                    skills.split('\n').forEach(skill => {
+                        if(skill.trim()) {
+                            doc.text(`• ${skill.trim()}`, 40, yPosition);
+                            yPosition += 15;
+                        }
+                    });
+                    yPosition += 20;
+                }
+        
+                // Add Projects (NEW)
+                if(projects) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Projects', 40, yPosition);
+                    yPosition += 20;
+                    doc.setFont(undefined, 'normal');
+                    projects.split('\n').forEach(project => {
+                        if(project.trim()) {
+                            const [title, ...desc] = project.split('-');
+                            doc.text(`• ${title?.trim() || 'Project'}`, 40, yPosition);
+                            if(desc.length > 0) {
+                                doc.text(desc.join('-').trim(), 60, yPosition + 10);
+                                yPosition += 15;
+                            }
+                            yPosition += 20;
+                        }
+                    });
+                    yPosition += 20;
+                }
+        
+                // Add Achievements (NEW)
+                if(achievements) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Achievements', 40, yPosition);
+                    yPosition += 20;
+                    doc.setFont(undefined, 'normal');
+                    achievements.split('\n').forEach(achievement => {
+                        if(achievement.trim()) {
+                            doc.text(`• ${achievement.trim()}`, 40, yPosition);
+                            yPosition += 15;
+                        }
+                    });
+                    yPosition += 20;
+                }
+        
+                // Add Languages (NEW)
+                if(languages) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Languages', 40, yPosition);
+                    yPosition += 20;
+                    doc.setFont(undefined, 'normal');
+                    languages.split(',').forEach(lang => {
+                        if(lang.trim()) {
+                            const [language, level] = lang.split('(');
+                            doc.text(`• ${language.trim()}: ${level?.replace(')', '')?.trim() || ''}`, 40, yPosition);
+                            yPosition += 15;
+                        }
+                    });
+                }
+        
+                // Save PDF
+                doc.save(`${name.replace(/\s/g, '_')}_Resume.pdf`);
+                
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                alert('Error generating PDF. Please check the console for details.');
+            }
+        }
+        
+        // Initial preview update
+        updatePreview();
+        </script>
+
+
+</body>
+</html>
